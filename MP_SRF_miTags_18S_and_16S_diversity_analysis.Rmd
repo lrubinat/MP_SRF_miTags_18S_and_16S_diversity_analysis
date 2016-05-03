@@ -1,0 +1,206 @@
+---
+title: "MP_SRF_miTags_18S_and_16S_diversity_analysis"
+author: "lrubinat"
+date: "03/05/2016"
+output:
+  html_document:
+    theme: united
+    toc: yes
+  pdf_document:
+    highlight: zenburn
+    toc: yes
+---
+
+<!--- INITIALIZATION
+```{r, echo=FALSE}
+#error hook to kill knitr in case of errors
+library(knitr)
+knit_hooks$set(error = function(x, options) stop(x))
+opts_chunk$set(cache=TRUE, autodep=TRUE)
+```
+--->
+
+# 1) 18S amplicons
+
+## 1.1) Data overview
+
+Let's read the dataset and remove the samples containing less than 470 reads:
+
+``` {r load_data_18S, echo=FALSE, message=FALSE}
+setwd("/home/laura/Documents/TFM/genwork/data_analysis/MP_SRF_miTags_18S_and_16S_diversity_analysis/")
+
+#read data 
+MP_18S_miTags_tax <- read.table(file="/home/laura/Documents/TFM/home/data/TARASPINA/SRF_miTags/MP_SRF/otu_table99_MP_SRF_18S.txt", head=TRUE, fill=TRUE)
+
+#table dimensions and format before setting column names
+dim(MP_18S_miTags_tax) # 1641   13
+MP_18S_miTags_tax[1:5,1:5]
+
+#row names = OTU name (option A)
+row.names(MP_18S_miTags_tax)<-MP_18S_miTags_tax[,1]
+
+#row names = row number (option B)
+#rownames(otu_MP_18S) <- 1:nrow(otu_MP_18S)
+
+MP_18S_miTags_tax<-MP_18S_miTags_tax[,-1]
+MP_18S_miTags_tax[is.na(MP_18S_miTags_tax)]<-"NA"
+
+dim(MP_18S_miTags_tax)
+MP_18S_miTags_tax[1:5,1:5]
+
+#table with taxonomi classification alone
+MP_18S_class <- MP_18S_miTags_tax[,11:12]
+dim(MP_18S_class)
+MP_18S_class[1:5,1:2]
+
+#table with occurence data alone
+MP_18S_miTags_tax_occur <- MP_18S_miTags_tax[,1:10]
+dim(MP_18S_miTags_tax_occur) #1641   10
+MP_18S_miTags_tax_occur[1:5,1:5]
+
+amplicons_per_sample_MP_18S<-colSums(MP_18S_miTags_tax_occur)
+amplicons_per_sample_MP_18S[which(colSums(MP_18S_miTags_tax_occur)<470)]
+# sample st030 has less than 470 reads.
+
+#remove samples with less than 470 reads
+MP_18S_miTags_tax_occur_min470 <- MP_18S_miTags_tax_occur[,colSums(MP_18S_miTags_tax_occur) >= 470]
+dim(MP_18S_miTags_tax_occur_min470)
+```
+
+
+## 1.2) Normalization
+
+#Let's normalize the original dataset by randomly subsampling 470 reads in each station:
+
+``` {r species_richness_rarefaction1, echo=TRUE}
+library(vegan)
+MP_18S_miTags_tax_occur_min470_t<-t(MP_18S_miTags_tax_occur_min470)
+MP_18S_miTags_tax_occur_ss470<-rrarefy(MP_18S_miTags_tax_occur_min470_t, 470)
+```
+
+The normalized table shows the following dimensions and format:
+
+```{r species_richness_rarefaction2, echo=FALSE}
+dim(MP_18S_miTags_tax_occur_ss470)
+MP_18S_miTags_tax_occur_ss470[1:5,1:5]
+```
+
+Its content fits with the expected normalization values (470 reads per station):
+
+``` {r species_richness_rarefaction3, echo=TRUE}
+rowSums(MP_18S_miTags_tax_occur_ss470)
+```
+
+Let's check out how many OTUs don't appear in the new table:
+
+```{r species_richness_rarefaction4, echo=1:5}
+length(which(colSums(MP_18S_miTags_tax_occur_ss470)==0)) 
+```
+
+There are 429 OTUs that don't show any occurrence in the normalized data. Let's remove them from the table and take a look at its final dimensions:
+
+```{r species_richness_rarefaction5, echo=1:3}
+MP_18S_miTags_tax_occur_ss470_no_cero<-MP_18S_miTags_tax_occur_ss470[,-(which(colSums(MP_18S_miTags_tax_occur_ss470)==0))]
+dim(MP_18S_miTags_tax_occur_ss470_no_cero)
+
+#the final dimensions of the normalized table are 119 26907.
+#1212 + 429 = 1641
+```
+
+Datasets summary:
+dim(MP_18S_miTags_tax) --> 1641   12
+dim(MP_18S_miTags_tax_occur) --> 1641   10
+dim(MP_18S_miTags_tax_occur_ss470_no_cero) --> 9 1212
+
+
+
+# 2) 16S amplicons
+
+## 2.1) Data overview
+
+Let's read the dataset and remove the samples containing less than 470 reads:
+
+``` {r load_data_16S, echo=FALSE, message=FALSE}
+
+#read data 
+MP_16S_miTags_tax <- read.table(file="/home/laura/Documents/TFM/home/data/TARASPINA/SRF_miTags/MP_SRF/otu_table99_MP_SRF_16S.txt", head=TRUE, fill=TRUE)
+
+#table dimensions and format before setting column names
+dim(MP_16S_miTags_tax) # 8248   14
+MP_16S_miTags_tax[1:5,1:5]
+
+#row names = OTU name (option A)
+row.names(MP_16S_miTags_tax)<-MP_16S_miTags_tax[,1]
+
+#row names = row number (option B)
+#rownames(otu_MP_16S) <- 1:nrow(otu_MP_16S)
+
+MP_16S_miTags_tax<-MP_16S_miTags_tax[,-1]
+MP_16S_miTags_tax[is.na(MP_16S_miTags_tax)]<-"NA"
+
+dim(MP_16S_miTags_tax)
+MP_16S_miTags_tax[1:5,1:5]
+
+#table with taxonomi classification alone
+MP_16S_class <- MP_16S_miTags_tax[,11:13]
+dim(MP_16S_class)
+MP_16S_class[1:5,1:3]
+
+#table with occurence data alone
+MP_16S_miTags_tax_occur <- MP_16S_miTags_tax[,1:10]
+dim(MP_16S_miTags_tax_occur) #8248   10
+MP_16S_miTags_tax_occur[1:5,1:5]
+
+amplicons_per_sample_MP_16S<-colSums(MP_16S_miTags_tax_occur)
+amplicons_per_sample_MP_16S[which(colSums(MP_16S_miTags_tax_occur)<20000)]
+#only st101 and st120 have less than 20000 ready. We'll normalize at 13676 reads.
+
+#let's remove samples with omitted in 18S dataset (so that we can compare the relative abundance of 18S and 16S OTUs considering the same samples)
+MP_16S_miTags_tax_occur_min13676<-subset(MP_16S_miTags_tax_occur, select=-c(st030))
+dim(MP_16S_miTags_tax_occur_min13676) #8248    9
+MP_16S_miTags_tax_occur_min13676[1:5,1:5]
+```
+
+## 2.2) Normalization
+
+#Let's normalize the original dataset by randomly subsampling 13676 reads in each station:
+
+``` {r species_richness_rarefaction1, echo=TRUE}
+MP_16S_miTags_tax_occur_min13676_t<-t(MP_16S_miTags_tax_occur_min13676)
+MP_16S_miTags_tax_occur_ss13676<-rrarefy(MP_16S_miTags_tax_occur_min13676_t, 13676)
+```
+
+The normalized table shows the following dimensions and format:
+
+```{r species_richness_rarefaction2, echo=FALSE}
+dim(MP_16S_miTags_tax_occur_ss13676)
+MP_16S_miTags_tax_occur_ss13676[1:5,1:5]
+```
+
+Its content fits with the expected normalization values (13676 reads per station):
+
+``` {r species_richness_rarefaction3, echo=TRUE}
+rowSums(MP_16S_miTags_tax_occur_ss13676)
+```
+
+Let's check out how many OTUs don't appear in the new table:
+
+```{r species_richness_rarefaction4, echo=1:5}
+length(which(colSums(MP_16S_miTags_tax_occur_ss13676)==0)) 
+```
+
+There are 2174 OTUs that don't show any occurrence in the normalized data. Let's remove them from the table and take a look at its final dimensions:
+
+```{r species_richness_rarefaction5, echo=1:3}
+MP_16S_miTags_tax_occur_ss13676_no_cero<-MP_16S_miTags_tax_occur_ss13676[,-(which(colSums(MP_16S_miTags_tax_occur_ss13676)==0))]
+dim(MP_16S_miTags_tax_occur_ss13676_no_cero)
+
+#the final dimensions of the normalized table are  9 6074.
+#2174+6074 = 8248
+```
+
+Datasets summary:
+dim(MP_16S_miTags_tax) --> 8248   13
+dim(MP_16S_miTags_tax_occur) --> 8248   10
+dim(MP_16S_miTags_tax_occur_ss13676_no_cero) -->  9 6074
+
