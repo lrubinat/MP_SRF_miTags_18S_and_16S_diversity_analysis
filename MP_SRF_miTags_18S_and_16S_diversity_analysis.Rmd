@@ -357,7 +357,7 @@ MP_16S_miTags_tax_occur[1:5,1:5]
 
 amplicons_per_sample_MP_16S<-colSums(MP_16S_miTags_tax_occur)
 amplicons_per_sample_MP_16S[which(colSums(MP_16S_miTags_tax_occur)<20000)]
-#only st101 and st120 have less than 20000 ready. We'll normalize at 13676 reads.
+#only st101 and st120 have less than 20000 reads. We'll normalize at 13676 reads.
 
 #let's remove samples with omitted in 18S dataset (so that we can compare the relative abundance of 18S and 16S OTUs considering the same samples)
 MP_16S_miTags_tax_occur_min13676<-subset(MP_16S_miTags_tax_occur, select=-c(st030))
