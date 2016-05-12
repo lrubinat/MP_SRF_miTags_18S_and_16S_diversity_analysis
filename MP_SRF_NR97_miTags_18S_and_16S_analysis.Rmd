@@ -1,0 +1,215 @@
+---
+title: "MP_SRF_NR97_miTags_18S_and_16S_diversity_analysis"
+author: "lrubinat"
+date: "06/05/2016"
+output:
+  html_document:
+    theme: united
+    toc: yes
+  pdf_document:
+    highlight: zenburn
+    toc: yes
+---
+
+<!--- INITIALIZATION
+```{r, echo=FALSE}
+#error hook to kill knitr in case of errors
+library(knitr)
+knit_hooks$set(error = function(x, options) stop(x))
+opts_chunk$set(cache=TRUE, autodep=TRUE)
+```
+--->
+
+# 1) 18S amplicons
+
+## 1.1) Data overview
+
+Let's read the dataset and remove the samples containing less than 8522 reads:
+
+``` {r load_data, echo=FALSE, message=FALSE}
+setwd("/home/laura/Documents/TFM/genwork/data_analysis/MP_SRF_miTags_18S_and_16S_diversity_analysis/")
+
+#read data 
+tb18_tax <- read.table(file="/home/laura/Documents/TFM/home/data/TARASPINA/NR97/MP_SRF/otutb_NR97_MP_SRF_miTags_18S.txt", head=TRUE, fill=TRUE)
+
+#table dimensions and format before setting column names
+dim(tb18_tax) # 1460   13
+tb18_tax[1:5,1:5]
+
+#row names = OTU name (option A)
+row.names(tb18_tax)<-tb18_tax[,1]
+
+#row names = row number (option B)
+#rownames(otu_tb18) <- 1:nrow(otu_tb18)
+
+tb18_tax<-tb18_tax[,-1]
+tb18_tax[is.na(tb18_tax)]<-"NA"
+
+dim(tb18_tax)
+tb18_tax[1:5,1:5]
+
+#table with taxonomi classification alone
+tb18_class <- tb18_tax[,11:17]
+dim(tb18_class)
+tb18_class[1:5,1:7]
+
+#table with occurence data alone
+tb18_tax_occur <- tb18_tax[,1:10]
+dim(tb18_tax_occur) # 22702    10
+tb18_tax_occur[1:5,1:10]
+
+amplicons_per_sample_tb18<-colSums(tb18_tax_occur)
+amplicons_per_sample_tb18[which(colSums(tb18_tax_occur)<12000)]
+# sample st054 has less than 8522 reads.
+
+#remove samples with less than 8522 reads
+tb18_tax_occur_min8522 <- tb18_tax_occur[,colSums(tb18_tax_occur) >= 8522]
+dim(tb18_tax_occur_min8522)
+
+#remove samples with omitted in 16S dataset (so that we can compare the relative abundance of 16S and 18S OTUs considering the same samples)
+tb18_tax_occur_min8522<-subset(tb18_tax_occur_min8522, select=-c(st122, st124, st137, st144))
+dim(tb18_tax_occur_min8522) #47144   117
+
+#let's check if we loose any OTU when excluding the mentioned stations.
+tb18_tax_occur_min8522_no_cero<-tb18_tax_occur_min8522[,-(which(colSums(tb18_tax_occur_min8522)==0))]
+dim(tb18_tax_occur_min8522_no_cero)
+```
+
+Table dimensions and content outline:
+
+```{r starting_dataset, echo=FALSE}
+dim(tb18_tax_occur_min8522)
+tb18_tax_occur_min8522[1:5,1:5]
+```
+
+Minimum number of reads per station:
+
+```{r reads_per_sample_overview1, echo=1}
+min(colSums(tb18_tax_occur_min8522)) 
+#8522
+```
+
+Maximum number of reads per station:
+
+```{r reads_per_sample_overview2, echo=1}
+max(colSums(tb18_tax_occur_min8522)) 
+# max: 936570
+```
+
+Identification of station with higher number of reads:
+
+```{r reads_per_sample_overview3, echo=TRUE}
+amplicons_per_sample<-colSums(tb18_tax_occur_min8522)
+amplicons_per_sample[which(colSums(tb18_tax_occur_min8522)>900000)]
+```
+
+Overall reads per sample:
+
+``` {r reads_per_sample_overview4, echo=FALSE}
+plot(sort(colSums(tb18_tax_occur_min8522)), pch=19, xlab="sample", ylab="reads per sample", cex=0.9)
+```
+
+
+## 1.2) Normalization
+
+Let's normalize the original dataset by randomly subsampling 8522 reads in each station:
+
+``` {r species_richness_rarefaction1, echo=TRUE}
+library(vegan)
+tb18_tax_occur_min8522_t<-t(tb18_tax_occur_min8522)
+tb18_tax_occur_ss8522<-rrarefy(tb18_tax_occur_min8522_t, 8522)
+```
+
+The normalized table shows the following dimensions and format:
+
+```{r species_richness_rarefaction2, echo=FALSE}
+dim(tb18_tax_occur_ss8522)
+tb18_tax_occur_ss8522[1:5,1:5]
+```
+
+Its content fits with the expected normalization values (8522 reads per station):
+
+``` {r species_richness_rarefaction3, echo=TRUE}
+rowSums(tb18_tax_occur_ss8522)
+```
+
+Let's check out how many OTUs don't appear in the new table:
+
+```{r species_richness_rarefaction4, echo=1:5}
+length(which(colSums(tb18_tax_occur_ss8522)==0)) 
+```
+
+There are 20487 OTUs that don't show any occurrence in the normalized data. Let's remove them from the table and take a look at its final dimensions:
+
+```{r species_richness_rarefaction5, echo=1:3}
+tb18_tax_occur_ss8522_no_cero<-tb18_tax_occur_ss8522[,-(which(colSums(tb18_tax_occur_ss8522)==0))]
+dim(tb18_tax_occur_ss8522_no_cero)
+
+#the final dimensions of the normalized table are 117 26657.
+#26657 + 20487 = 47144
+```
+
+Datasets summary:
+dim(tb18_tax) --> 47144   129
+dim(tb18_tax_occur) --> 47144   122
+dim(tb18_tax_occur_ss8522_no_cero) --> 117 26657
+
+
+
+
+
+
+
+
+# 2) 16S amplicons
+
+## 2.1) Data overview
+
+Let's read the dataset and remove the samples containing less than 5836 reads:
+
+``` {r load_data_16S, echo=FALSE, message=FALSE}
+#read data 
+tb16_tax <- read.table(file="/home/laura/Documents/TFM/home/data/TARASPINA/NR97/MP_SRF/otutb_NR97_MP_SRF_miTags_18S.txt", head=TRUE, fill=TRUE)
+
+#table dimensions and format before setting column names
+dim(tb16_tax) # 753  17
+tb16_tax[1:5,1:5]
+
+#row names = OTU name (option A)
+row.names(tb16_tax)<-tb16_tax[,1]
+
+#row names = row number (option B)
+#rownames(otu_tb16) <- 1:nrow(otu_tb16)
+
+tb16_tax<-tb16_tax[,-1]
+tb16_tax[is.na(tb16_tax)]<-0
+
+dim(tb16_tax)
+tb16_tax[1:5,1:5]
+
+#table with taxonomi classification alone
+tb16_class <- tb16_tax[,11:16]
+dim(tb16_class)
+tb16_class[1:5,1:6]
+
+#table with occurence data alone
+tb16_tax_occur <- tb16_tax[,1:10]
+dim(tb16_tax_occur) # 753  10
+tb16_tax_occur[1:5,1:5]
+
+amplicons_per_sample_tb16<-colSums(tb16_tax_occur)
+amplicons_per_sample_tb16[which(colSums(tb16_tax_occur)<58360)]
+# samples st122, st124, st137 and st144 have less than 5836 reads.
+
+#remove samples with less than 5836 reads
+tb16_tax_occur_min5836 <- tb16_tax_occur[,colSums(tb16_tax_occur) >= 5836]
+dim(tb16_tax_occur_min5836)
+
+#remove samples with omitted in MP_SRF_16S_amplicons_tax dataset (so that we can compare the relative abundance of 16S and 16S OTUs considering the same samples)
+tb16_tax_occur_min5836<-subset(tb16_tax_occur_min5836, select=-c(st054))
+dim(tb16_tax_occur_min5836)
+
+#let's check if we loose any OTU when excluding the mentioned stations.
+tb16_tax_occur_min5836_no_cero<-tb16_tax_occur_min5836[,-(which(colSums(tb16_tax_occur_min5836)==0))]
+dim(tb16_tax_occur_min5836_no_cero)
+```
