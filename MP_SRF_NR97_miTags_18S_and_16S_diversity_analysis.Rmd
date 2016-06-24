@@ -372,9 +372,7 @@ ggplot(MP_NR97_18S_miTags_OTUs_reads_samples_rel_abund) +
 ggplot(MP_NR97_18S_miTags_OTUs_reads_samples_rel_abund) +
   geom_point(aes(OTUs_per_class, reads_per_class)) +
   geom_text_repel(aes(OTUs_per_class, reads_per_class, label = rownames(MP_NR97_18S_miTags_OTUs_reads_samples_rel_abund)), size=4, force = 3, box.padding = unit(0.1, "lines"), point.padding = unit(0.02, 'lines')) + labs(title="[4.3] Reads per class vs. OTUs per class", x="\nMP-miTags-fraction-18S OTUs (%)", y="MP-miTags-fraction-18S reads (%)\n") + scale_x_log10(limits = c(-1,200), breaks = c(0,0.1,1,10,100)) + scale_y_log10(limits = c(-1,200), breaks = c(0,0.1,1,10,100)) + theme(axis.text=element_text(size=14), axis.title=element_text(size=16))
-
 ```
-
 
 ```{r reads_vs_samples_18S, echo=FALSE}
 ggplot(MP_NR97_18S_miTags_OTUs_reads_samples_rel_abund) +
