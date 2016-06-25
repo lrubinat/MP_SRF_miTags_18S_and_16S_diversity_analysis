@@ -64,3 +64,6 @@ stations_vs_OTUs_protists_plus_bacteria_rel_abundance_non.norm	aes	c	coord_trans
 OTUs_vs_reads_protists_plus_bacteria_rel_abundance_non.norm	aes	c	coord_trans	geom_point	geom_text	ggplot	labs	MP_NR97_16S_miTags_protists_plus_bacteria_OTUs_reads_samples_non.norm_rel_abund	OTUs_per_class	reads_per_class	rownames	scale_x_log10
 reads_vs_samples_18S	aes	c	element_text	geom_point	geom_text_repel	ggplot	labs	MP_NR97_18S_miTags_OTUs_reads_samples_rel_abund	reads_per_class	rownames	samples_per_class	scale_x_continuous	scale_y_log10	theme	unit
 reads_vs_samples_16S	aes	c	element_text	geom_point	geom_text_repel	ggplot	labs	MP_NR97_16S_miTags_protists_plus_bacteria_OTUs_reads_samples_rel_abund	reads_per_class	rownames	samples_per_class	scale_x_continuous	scale_y_log10	theme	unit
+cyanobacteria_histogram	!=	$	aggregate	attach	c	colnames<-	detach	length	list	MP_NR97_16S_miTags_bacteria	order	row.names<-	rowSums	sum	which	x
+cyanobacteria_histogram2	class_summary_otus_per_class_cyano_order	class_summary_reads_per_class_cyano_order	merge
+cyanobacteria_histogram3	[<-	$	$<-	aes	c	colnames<-	colSums	data	element_blank	element_text	geom_bar	ggplot	group	labs	order	read.table	rel	row.names<-	rownames<-	scale_fill_manual	scale_y_continuous	T	theme	value
